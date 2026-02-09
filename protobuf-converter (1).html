@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C# to .proto Converter - Advanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        textarea {
+            flex: 1;
+            min-height: 500px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #input {
+            background: #f8f9fa;
+        }
+
+        #output {
+            background: #f0f4f8;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 0 30px 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .convert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .clear-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .clear-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .copy-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .copy-btn:hover {
+            background: #059669;
+        }
+
+        .download-btn {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #2563eb;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+            z-index: 1000;
+            font-weight: 500;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stats {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .examples-section {
+            padding: 20px 30px;
+            background: #fff8e1;
+            border-bottom: 2px solid #ffd54f;
+        }
+
+        .examples-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .examples-header h3 {
+            color: #f57c00;
+            font-size: 1.1em;
+            margin: 0;
+        }
+
+        #exampleSelect {
+            padding: 10px 15px;
+            border: 2px solid #ffd54f;
+            border-radius: 6px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            min-width: 250px;
+            transition: all 0.3s;
+        }
+
+        #exampleSelect:hover {
+            border-color: #ffa726;
+        }
+
+        #exampleSelect:focus {
+            outline: none;
+            border-color: #ff9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .button-container {
+                flex-wrap: wrap;
+            }
+
+            button {
+                min-width: calc(50% - 7.5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🔄 C# to .proto Converter</h1>
+            <p>Advanced converter - Supports all C# ProtoBuf class variations</p>
+        </div>
+
+        <div class="examples-section">
+            <div class="examples-header">
+                <h3>📝 Need help? Load a sample:</h3>
+                <select id="exampleSelect" onchange="loadExample()">
+                    <option value="">-- Select Example --</option>
+                    <option value="simple">Simple Class</option>
+                    <option value="withlist">Class with List</option>
+                    <option value="multiple">Multiple Classes</option>
+                    <option value="complex">Complex Example (All Features)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <h2>C# Input</h2>
+                <textarea id="input" placeholder="Paste your C# ProtoBuf classes here..."></textarea>
+            </div>
+
+            <div class="panel">
+                <h2>.proto Output</h2>
+                <textarea id="output" readonly placeholder="Your .proto file will appear here..."></textarea>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">Ready to convert...</div>
+
+        <div class="button-container">
+            <button class="convert-btn" onclick="convertToProto()">Convert</button>
+            <button class="copy-btn" onclick="copyToClipboard()">Copy Output</button>
+            <button class="download-btn" onclick="downloadProto()">Download .proto</button>
+            <button class="clear-btn" onclick="clearAll()">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        function convertToProto() {
+            const input = document.getElementById('input').value;
+            if (!input.trim()) {
+                showNotification('Please paste C# code first!', false);
+                return;
+            }
+
+            try {
+                const protoContent = parseCSharptToProto(input);
+                document.getElementById('output').value = protoContent;
+                showNotification('Conversion successful!');
+            } catch (error) {
+                showNotification('Error: ' + error.message, false);
+                console.error(error);
+            }
+        }
+
+        function parseCSharptToProto(csharpCode) {
+            let proto = 'syntax = "proto3";\n\n';
+            
+            const classes = extractClasses(csharpCode);
+            
+            if (classes.length === 0) {
+                throw new Error('No ProtoContract classes found!');
+            }
+
+            // Update stats
+            document.getElementById('stats').textContent = 
+                `Found ${classes.length} class(es) with ${classes.reduce((sum, c) => sum + c.fields.length, 0)} total field(s)`;
+
+            classes.forEach(cls => {
+                proto += `message ${cls.name} {\n`;
+                
+                cls.fields.forEach(field => {
+                    const protoType = convertCSharpTypeToProto(field.type);
+                    proto += `  ${protoType} ${field.name} = ${field.number};\n`;
+                });
+                
+                proto += '}\n\n';
+            });
+
+            return proto.trim();
+        }
+
+        function extractClasses(code) {
+            const classes = [];
+            
+            // Remove comments
+            code = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+            
+            // Split by class definitions
+            const lines = code.split('\n');
+            let currentClass = null;
+            let braceCount = 0;
+            let inClass = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // Check for ProtoContract attribute
+                if (line.includes('[ProtoContract]')) {
+                    // Next line(s) should have class definition
+                    for (let j = i + 1; j < lines.length; j++) {
+                        const classLine = lines[j].trim();
+                        const classMatch = classLine.match(/public\s+class\s+(\w+)/);
+                        if (classMatch) {
+                            currentClass = {
+                                name: classMatch[1],
+                                fields: []
+                            };
+                            inClass = true;
+                            if (classLine.includes('{')) {
+                                braceCount = 1;
+                            }
+                            i = j;
+                            break;
+                        }
+                    }
+                    continue;
+                }
+                
+                if (inClass) {
+                    // Count braces
+                    braceCount += (line.match(/{/g) || []).length;
+                    braceCount -= (line.match(/}/g) || []).length;
+                    
+                    // Check for ProtoMember
+                    if (line.includes('[ProtoMember(')) {
+                        const numberMatch = line.match(/\[ProtoMember\((\d+)\)\]/);
+                        if (numberMatch) {
+                            const fieldNumber = numberMatch[1];
+                            
+                            // Look for the property in the next few lines
+                            for (let k = i; k < Math.min(i + 5, lines.length); k++) {
+                                const propLine = lines[k].trim();
+                                const propMatch = propLine.match(/public\s+([\w<>?,\s]+?)\s+(\w+)\s*\{/);
+                                if (propMatch) {
+                                    const fieldType = propMatch[1].replace(/\?/g, '').trim();
+                                    const fieldName = propMatch[2];
+                                    
+                                    currentClass.fields.push({
+                                        number: fieldNumber,
+                                        type: fieldType,
+                                        name: fieldName
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // End of class
+                    if (braceCount === 0 && currentClass) {
+                        classes.push(currentClass);
+                        currentClass = null;
+                        inClass = false;
+                    }
+                }
+            }
+            
+            // Add last class if still open
+            if (currentClass && currentClass.fields.length > 0) {
+                classes.push(currentClass);
+            }
+            
+            return classes;
+        }
+
+        function convertCSharpTypeToProto(csharpType) {
+            // Remove nullable marker and trim
+            let type = csharpType.replace(/\?/g, '').trim();
+            
+            // Handle List/IList types
+            const listMatch = type.match(/(?:List|IList)<(.+)>/);
+            if (listMatch) {
+                const innerType = listMatch[1].trim();
+                return `repeated ${convertCSharpTypeToProto(innerType)}`;
+            }
+            
+            // Map C# types to proto types
+            const typeMap = {
+                'string': 'string',
+                'String': 'string',
+                'int': 'int32',
+                'Int32': 'int32',
+                'long': 'int64',
+                'Int64': 'int64',
+                'uint': 'uint32',
+                'UInt32': 'uint32',
+                'ulong': 'uint64',
+                'UInt64': 'uint64',
+                'double': 'double',
+                'Double': 'double',
+                'float': 'float',
+                'Float': 'float',
+                'bool': 'bool',
+                'Boolean': 'bool',
+                'byte[]': 'bytes',
+                'Byte[]': 'bytes',
+                'byte': 'bytes',
+                'Byte': 'bytes',
+                'decimal': 'double',
+                'Decimal': 'double'
+            };
+            
+            return typeMap[type] || type;
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('output');
+            if (!output.value) {
+                showNotification('Nothing to copy!', false);
+                return;
+            }
+            output.select();
+            document.execCommand('copy');
+            showNotification('Copied to clipboard!');
+        }
+
+        function downloadProto() {
+            const output = document.getElementById('output').value;
+            if (!output) {
+                showNotification('Nothing to download!', false);
+                return;
+            }
+
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'messages.proto';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showNotification('File downloaded!');
+        }
+
+        function clearAll() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('stats').textContent = 'Ready to convert...';
+            showNotification('Cleared all content!');
+        }
+
+        function showNotification(message, success = true) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = success ? '#10b981' : '#ef4444';
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Auto-convert on page load if there's content
+        window.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('input');
+            if (input.value.trim()) {
+                convertToProto();
+            }
+        });
+
+        // Example templates
+        const examples = {
+            simple: `[ProtoContract]
+public class UserRequest
+{
+    [ProtoMember(1)]
+    public string? UserId { get; set; }
+    [ProtoMember(2)]
+    public string? UserName { get; set; }
+    [ProtoMember(3)]
+    public string? Email { get; set; }
+}`,
+
+            withlist: `[ProtoContract]
+public class ProductList
+{
+    [ProtoMember(1)]
+    public List<Product>? Items { get; set; }
+    [ProtoMember(2)]
+    public string? TotalCount { get; set; }
+}
+
+[ProtoContract]
+public class Product
+{
+    [ProtoMember(1)]
+    public string? ProductId { get; set; }
+    [ProtoMember(2)]
+    public string? Name { get; set; }
+    [ProtoMember(3)]
+    public string? Price { get; set; }
+}`,
+
+            multiple: `[ProtoContract]
+public class LoginRequest
+{
+    [ProtoMember(1)]
+    public string? Username { get; set; }
+    [ProtoMember(2)]
+    public string? Password { get; set; }
+}
+
+[ProtoContract]
+public class LoginResponse
+{
+    [ProtoMember(1)]
+    public string? Token { get; set; }
+    [ProtoMember(2)]
+    public string? Message { get; set; }
+    [ProtoMember(3)]
+    public string? Status { get; set; }
+}
+
+[ProtoContract]
+public class UserProfile
+{
+    [ProtoMember(1)]
+    public string? UserId { get; set; }
+    [ProtoMember(2)]
+    public string? FullName { get; set; }
+    [ProtoMember(3)]
+    public string? Email { get; set; }
+    [ProtoMember(4)]
+    public string? Phone { get; set; }
+}`,
+
+            complex: `[ProtoContract]
+public class request_GetSamplestockData
+{
+    [ProtoMember(1)]
+    public string? Smid {get; set; }
+    [ProtoMember(2)]
+    public string? Fromdate { get; set; }
+    [ProtoMember(3)]
+    public string? Todate { get; set; }
+    [ProtoMember(4)]
+    public string? Status { get; set; }
+    [ProtoMember(5)]
+    public string? Docid { get; set; }
+    [ProtoMember(6)]
+    public string? Remark { get; set; }
+}
+
+[ProtoContract]
+public class response_sampleApprovereject
+{
+    [ProtoMember(1)]
+    public string? Msg { get; set; }
+}
+
+[ProtoContract]
+public class response_GetsampleStock
+{
+    [ProtoMember(1)]
+    public string? Date { get; set; }
+    [ProtoMember(2)]
+    public string? DocID { get; set; }
+    [ProtoMember(3)]
+    public string? Smname { get; set; }
+    [ProtoMember(4)]
+    public string? TotalStockFill { get; set; }
+    [ProtoMember(5)]
+    public string? Remark { get; set; }
+    [ProtoMember(6)]
+    public string? Status { get; set; }
+}
+
+[ProtoContract]
+public class response_GetsampleStockDetails
+{
+    [ProtoMember(1)]
+    public string? ItemName { get; set; }
+    [ProtoMember(2)]
+    public string? Quantity { get; set; }
+    [ProtoMember(3)]
+    public string? Rate { get; set; }
+    [ProtoMember(4)]
+    public string? Amount { get; set; }
+    [ProtoMember(5)]
+    public string? Date { get; set; }
+    [ProtoMember(6)]
+    public string? DocID { get; set; }
+    [ProtoMember(7)]
+    public string? Smname { get; set; }
+    [ProtoMember(8)]
+    public string? Remark { get; set; }
+}
+
+[ProtoContract]
+public class responselist_GetsampleStock
+{
+    [ProtoMember(1)]
+    public List<response_GetsampleStock>? Data { get; set; }
+}
+
+[ProtoContract]
+public class responselist_GetsampleStockdetails
+{
+    [ProtoMember(1)]
+    public List<response_GetsampleStockDetails>? Data { get; set; }
+}`
+        };
+
+        function loadExample() {
+            const select = document.getElementById('exampleSelect');
+            const example = examples[select.value];
+            
+            if (example) {
+                document.getElementById('input').value = example;
+                convertToProto();
+                showNotification('Example loaded! ✨');
+            }
+        }
+    </script>
+</body>
+</html>
